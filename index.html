@@ -3,199 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rahukalam Calculator</title>
+    <title>Rahu Kalam Calculator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-        label, input, button {
-            margin: 5px 0;
-            display: block;
+        .container {
+            max-width: 500px;
+            margin: auto;
         }
-        #result {
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .output {
             margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
         }
     </style>
 </head>
 <body>
-    <h1>Rahukalam Calculator</h1>
-    <label for="city">City:</label>
-    <input type="text" id="city-input" placeholder="Enter city" />
-    <ul id="suggestions"></ul>
-    
-    <label for="date">Date:</label>
-    <input id="date" type="date">
-    
-    <button id="calculate">Calculate Rahukalam</button>
-    
-    <div id="result"></div>
-    
+    <div class="container">
+        <h1>Rahu Kalam Calculator</h1>
+        <label for="city">Enter City Name:</label>
+        <input type="text" id="city" placeholder="E.g., New York" required>
 
+        <label for="date">Select Date:</label>
+        <input type="date" id="date" required>
 
+        <button onclick="calculateRahukalam()">Get Rahu Kalam</button>
+
+        <div class="output" id="output"></div>
+    </div>
 
     <script>
-	const apiKey = "bf67f2171emsh8ab4cbe105941b7p184215jsn401a17604946"; // Replace with your API key
-	const apiUrl = "https://wft-geo-db.p.rapidapi.com/v1/geo/cities";
-	const input = document.getElementById("city-input");
-	const suggestions = document.getElementById("suggestions");
-
-	input.addEventListener("input", async () => {
-	    const query = input.value.trim();
-	    if (query.length < 2) {
-		suggestions.innerHTML = ""; // Clear suggestions if input is short
-		return;
-	    }
-
-	    const response = await fetch(`${apiUrl}?namePrefix=${query}&limit=10`, {
-		headers: {
-		    "X-RapidAPI-Key": apiKey,
-		    "X-RapidAPI-Host": "wft-geo-db.p.rapidapi.com"
-		}
-	    });
-	    const data = await response.json();
-
-	    suggestions.innerHTML = data.data
-		.map(
-		    (city) => `
-		    <li data-lat="${city.latitude}" data-lon="${city.longitude}">
-			${city.city}, ${city.region}, ${city.country}
-		    </li>`
-		)
-		.join("");
-
-	    // Add click event to suggestions
-	    Array.from(suggestions.querySelectorAll("li")).forEach((li) =>
-		li.addEventListener("click", () => {
-		    input.value = li.textContent.trim();
-		    suggestions.innerHTML = ""; // Clear suggestions
-		})
-	    );
-	});
-
-        // API Keys
-        const geoApiKey = "3a92dcad9ea5478dbc47c997c354843d"; // Replace with OpenCage API key
-
-        // Weekday Rahukalam Start Segment Mapping
-        const weekdays = [
-            [2], // Monday
-            [7], // Tuesday
-            [5], // Wednesday
-            [6], // Thursday
-            [4], // Friday
-            [3], // Saturday
-            [8]  // Sunday
-        ];
-
-        // Helper Function to Convert Date to Local Time
-        function toLocalTime(date, timeZone) {
-            return new Date(date.toLocaleString("en-US", { timeZone }));
-        }
-
-
-	// Function to get the timezone from latitude and longitude using OpenCage API
-	async function fetchTimezone(lat, lng) {
-	    try {
-		// Fetch the timezone data from OpenCage (or other timezone APIs)
-		const timezoneResponse = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${lat},${lng}&key=${geoApiKey}`);
-		const timezoneData = await timezoneResponse.json();
-
-		if (timezoneData.results.length > 0) {
-		    // Assuming the timezone is stored in the first result
-		    return timezoneData.results[0].annotations.timezone.name;
-		} else {
-		    throw new Error("Timezone information not found.");
-		}
-	    } catch (error) {
-		console.error(error.message);
-		throw error;
-	    }
-	}
-
-	// Modify the 'fetchSunTimes' function to fetch timezone along with sunrise and sunset
-	async function fetchSunTimes(city, date) {
-	    try {
-		// Fetch latitude and longitude for the city
-		const geoResponse = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(city-input)}&key=${geoApiKey}`);
-		const geoData = await geoResponse.json();
-		
-		if (!geoData.results.length) {
-		    throw new Error("City not found.");
-		}
-
-		const { lat, lng } = geoData.results[0].geometry;
-
-		// Fetch sunrise and sunset times
-		const sunResponse = await fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&date=${date}&formatted=0`);
-		const sunData = await sunResponse.json();
-
-		if (!sunData.results) {
-		    throw new Error("Sunrise and sunset data not available.");
-		}
-
-		// Fetch timezone using the latitude and longitude
-		const timezone = await fetchTimezone(lat, lng);
-
-		return {
-		    sunrise: new Date(sunData.results.sunrise),
-		    sunset: new Date(sunData.results.sunset),
-		    timezone
-		};
-	    } catch (error) {
-		console.error(error.message);
-		throw error;
-	    }
-	}
-
-
-        // Calculate Rahukalam
-        function calculateRahukalam(sunrise, sunset, dayOfWeek, timeZone) {
-
-
-            // Calculate segments of the day
-            const segments = 8;
-            const duration = (sunset - sunrise) / segments;
-
-            // Rahukalam start and end based on weekday mapping
-            const start = new Date(sunrise.getTime() + (weekdays[dayOfWeek][0] - 1) * duration);
-            const end = new Date(start.getTime() + duration);
-
-
-            return { start, end };
-        }
-
-        // Event Listener for Calculate Button
-        document.getElementById("calculate").addEventListener("click", async () => {
-            const city = document.getElementById("city-input").value.trim();
-            const date = document.getElementById("date").value;
+        async function calculateRahukalam() {
+            const city = document.getElementById('city').value.trim();
+            const date = document.getElementById('date').value;
+            const outputDiv = document.getElementById('output');
 
             if (!city || !date) {
-                document.getElementById("result").innerHTML = "<p>Please enter both city and date.</p>";
+                outputDiv.textContent = "Please provide both city and date.";
                 return;
             }
 
+            const API_KEY = "3a92dcad9ea5478dbc47c997c354843d"; // Replace with your OpenCage API key
+
             try {
-                // Fetch sunrise and sunset times
-                const sunTimes = await fetchSunTimes(city, date);
+                // Fetch city coordinates using OpenCage API
+                const geocodeResponse = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(city)}&key=${API_KEY}`);
+                const geocodeData = await geocodeResponse.json();
 
-		console.log("Sunrise: ", sunTimes.sunrise, "Sunset: ", sunTimes.sunset);
-                
-                // Calculate Rahukalam
-                const dayOfWeek = new Date(date).getDay();
-		const rahukalam = calculateRahukalam(sunTimes.sunrise, sunTimes.sunset, dayOfWeek, sunTimes.timezone);
-		console.log("Start: ", rahukalam.start, "End: ", rahukalam.end);
-		console.log("Timezone: ", sunTimes.timezone);
+                if (!geocodeData.results || geocodeData.results.length === 0) {
+                    outputDiv.textContent = "City not found. Please enter a valid city.";
+                    return;
+                }
 
-                // Display Results
-                document.getElementById("result").innerHTML = `
-                    <p>Rahukalam on ${date} in ${city}:</p>
-                    <p>Start: ${rahukalam.start.toLocaleTimeString("en-US", { timeZone: sunTimes.timezone })}</p>
-                    <p>End: ${rahukalam.end.toLocaleTimeString("en-US", { timeZone: sunTimes.timezone })}</p>
+                const { geometry } = geocodeData.results[0];
+                const { lat, lng } = geometry;
+                const tzName = geocodeData.results[0].annotations.timezone.name;
+
+                // Get Sunrise and Sunset times using Sunrise-Sunset API
+                const sunResponse = await fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&date=${date}&tzid=${tzName}&formatted=0`);
+                const sunData = await sunResponse.json();
+
+                if (sunData.status !== "OK") {
+                    outputDiv.textContent = "Unable to fetch sunrise and sunset times.";
+                    return;
+                }
+
+                const sunrise = new Date(sunData.results.sunrise);
+                const sunset = new Date(sunData.results.sunset);
+
+
+                // Format times
+                const sunriseLocalString = sunrise.toLocaleTimeString('en-US', { timeZone: tzName });
+                const sunsetLocalString = sunset.toLocaleTimeString('en-US', { timeZone: tzName });
+
+                // Calculate Rahu Kalam for the given day
+                const dayIndex = new Date(date).getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+                const rahukalamOffsets = [
+                    [1, 2], // Monday
+                    [6, 7], // Tuesday
+                    [4, 5], // Wednesday
+                    [5, 6], // Thursday
+                    [3, 4], // Friday
+                    [2, 3], // Saturday
+                    [7, 8] // Sunday
+                ];
+
+                const [startSegment, endSegment] = rahukalamOffsets[dayIndex];
+                const totalDayDuration = sunset- sunrise; // Total duration in milliseconds
+                const segmentDuration = totalDayDuration / 8; // Duration of one segment
+
+                const rahukalamStart = new Date(sunrise.getTime() + (startSegment * segmentDuration));
+                const rahukalamEnd = new Date(sunrise.getTime() + (endSegment * segmentDuration));
+                const rahuStrtStr = rahukalamStart.toLocaleTimeString('en-US', { timeZone: tzName });
+                const rahuEndStr = rahukalamEnd.toLocaleTimeString('en-US', { timeZone: tzName });
+debugger;
+
+                // Display output
+                outputDiv.innerHTML = `
+                    <strong>City:</strong> ${city}<br>
+                    <strong>Date:</strong> ${date}<br>
+                    <strong>Sunrise:</strong> ${sunriseLocalString}<br>
+                    <strong>Sunset:</strong> ${sunsetLocalString}<br>
+                    <strong>Rahu Kalam:</strong> ${rahuStrtStr} - ${rahuEndStr}
                 `;
             } catch (error) {
-                document.getElementById("result").innerHTML = `<p>Error: ${error.message}</p>`;
+                outputDiv.textContent = "An error occurred: " + error.message;
             }
-        });
+        }
     </script>
 </body>
 </html>
