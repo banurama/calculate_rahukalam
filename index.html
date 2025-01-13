@@ -89,8 +89,9 @@
                 data.features.forEach(feature => {
                     const city = feature.properties.city || feature.properties.name;
                     const country = feature.properties.country;
+                    const state = feature.properties.state;
                     const li = document.createElement('li');
-                    li.textContent = `${city}, ${country}`;
+                    li.textContent = `${city}, ${state}, ${country}`;
                     li.dataset.lat = feature.properties.lat;
                     li.dataset.lon = feature.properties.lon;
                     li.dataset.timezone = feature.properties.timezone.name;
