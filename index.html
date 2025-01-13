@@ -97,7 +97,7 @@
                     li.dataset.timezone = feature.properties.timezone.name;
 
                     li.addEventListener('click', () => {
-                        cityInput.value = `${city}, ${country}`;
+                        cityInput.value = `${city}, ${state}, ${country}`;
                         cityInput.dataset.lat = li.dataset.lat;
                         cityInput.dataset.lon = li.dataset.lon;
                         cityInput.dataset.timezone = li.dataset.timezone;
